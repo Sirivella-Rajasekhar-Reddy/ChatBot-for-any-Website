@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 
-os.environ['HF_TOKEN']=os.getenv("HF_TOKEN")
+os.environ['HF_TOKEN']="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"
 
 st.set_page_config(page_title="ChatBot for any Website", page_icon="🤖")
 st.title("🤖 ChatBot for any Website")
