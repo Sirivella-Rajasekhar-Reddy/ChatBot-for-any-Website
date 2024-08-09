@@ -1,9 +1,10 @@
 import validators, streamlit as st
-from langchain_community.document_loaders import WebBaseLoader
+from langchain_community.document_loaders import WebBaseLoader, UnstructuredURLLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.prompts import PromptTemplate
 from langchain_groq import ChatGroq
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import OllamaEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
@@ -24,13 +25,14 @@ with st.sidebar:
 
 llm=ChatGroq(groq_api_key=groq_api_key, model="Gemma2-9b-It")
 embeddings=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+#embeddings=OllamaEmbeddings(model="llama3.1")
 
 system_template = (
     "You are an assistant for question-answering tasks. "
     "Use the following pieces of retrieved context to answer "
     "the question. if the question is not related to the "
     "retrieved context and If you don't know the answer, say that you "
-    "don't know. keep the answer concise."
+    "don't know.keep the answer concise."
     "\n\n"
     "{context}"
 )
@@ -46,9 +48,11 @@ if st.button("Answer"):
         elif not validators.url(web_url):
             st.error("Please enter a valid Url. It can be website url")
         else:
-            loader=WebBaseLoader(web_path=[web_url])
+            #loader=WebBaseLoader(web_path=[web_url])
+            loader=UnstructuredURLLoader(urls=[web_url],ssl_verify=False,
+                                                 headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"})
             docs=loader.load()
-            text_splitter=RecursiveCharacterTextSplitter(separators="\n", chunk_size=1000, chunk_overlap=200)
+            text_splitter=RecursiveCharacterTextSplitter(separators="\n", chunk_size=1000, chunk_overlap=100)
             final_docs=text_splitter.split_documents(docs)
             vectore_storedb=FAISS.from_documents(final_docs, embeddings)
             retrieaver=vectore_storedb.as_retriever()
@@ -59,8 +63,3 @@ if st.button("Answer"):
             st.success(response["answer"])
     except Exception as e:
         st.exception(f'exception : {e}')
-
-
-
-    
-
